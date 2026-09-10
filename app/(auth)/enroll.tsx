@@ -5,7 +5,7 @@ import { Image, Text, View } from 'react-native';
 
 import { isApiError } from '@/api';
 import { useApi } from '@/api/ApiContext';
-import { markTotpConsumed } from '@/auth/totpFreshness';
+import { markTotpConsumed, wasTotpRecentlyConsumed } from '@/auth/totpFreshness';
 import { useEnvironment } from '@/config/EnvironmentContext';
 import { zuulErrorMessage, isLikelyVpnDown } from '@/features/connectivity/zuulErrorMessage';
 import { VpnSettingsButton } from '@/features/connectivity/VpnSettingsButton';
@@ -45,6 +45,11 @@ export default function EnrollScreen() {
   const [authCode, setAuthCode] = useState('');
   const [confirmError, setConfirmError] = useState<Error | null>(null);
   const [confirming, setConfirming] = useState(false);
+  // OC-93/ZG-78: same reasoning as /totp's own `showFreshCodeHint` (see totpFreshness.ts) —
+  // Matías's spec explicitly covers submits against EITHER TOTP-gated route, not just /totp's.
+  // An enroll-confirm that fails shortly after some other TOTP success (an earlier login, or a
+  // prior enroll attempt) is exactly the same "code still on screen from autofill/reuse" shape.
+  const [showFreshCodeHint, setShowFreshCodeHint] = useState(false);
 
   if (typeof token !== 'string' || token.length === 0) {
     return <Empty title="Registro" message="Este link de invitación no es válido." />;
@@ -54,6 +59,7 @@ export default function EnrollScreen() {
 
   async function handleConfirm() {
     setConfirmError(null);
+    setShowFreshCodeHint(false);
     setConfirming(true);
     try {
       await api.auth.enrollConfirm(username, password, code, useAuthTotp ? authCode : undefined);
@@ -66,6 +72,7 @@ export default function EnrollScreen() {
       router.replace('/login');
     } catch (err) {
       setConfirmError(isApiError(err) ? err : new Error('No se pudo conectar con Zuul'));
+      setShowFreshCodeHint(isApiError(err) && wasTotpRecentlyConsumed());
       setConfirming(false);
     }
   }
@@ -199,6 +206,13 @@ export default function EnrollScreen() {
               <Text className="text-center text-sm text-night-danger">
                 {zuulErrorMessage(environment.id, confirmError)}
               </Text>
+              {showFreshCodeHint && (
+                <Text className="text-center text-sm text-night-steel-muted">
+                  Este código puede ser el mismo que usaste hace instantes (para un login o para
+                  confirmar tu registro) — esperá a que tu app de autenticación genere uno nuevo
+                  antes de reintentar.
+                </Text>
+              )}
               {isLikelyVpnDown(environment.id, confirmError) && <VpnSettingsButton />}
             </>
           )}
