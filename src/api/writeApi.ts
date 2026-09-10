@@ -163,10 +163,14 @@ export function createWriteApi(http: HttpClient) {
     // OC-68: `/api/v1/broadcast` 404s against the real gateway -- the real route is
     // `/server/broadcast` (`xindeler-zuul/server/src/web.rs`), alongside the other `/server/*`
     // lifecycle actions.
-    broadcastMessage(message: string, idempotencyKey?: string) {
+    // ZG-80/OC-92: `bigScreen` -- optional, additive, backward-compatible field on the real
+    // route. Always sent explicitly (never omitted) so there's no ambiguity about which value a
+    // given send used; the server's own default (`false`) only matters for callers that predate
+    // this parameter, which no longer exist in this client.
+    broadcastMessage(message: string, bigScreen: boolean, idempotencyKey?: string) {
       return http.request<void>('/api/v1/server/broadcast', {
         method: 'POST',
-        body: { msg: message },
+        body: { msg: message, big_screen: bigScreen },
         idempotencyKey,
       });
     },
@@ -174,12 +178,18 @@ export function createWriteApi(http: HttpClient) {
     // OC-88/ZG-73: `targetReferences` are the same `reference`/`segment` strings the directory
     // and kick/ban/flag routes already use -- never a raw uuid (xindeler-zuul PR #131's own
     // security-review fix, see DirectMessageResponseSchema's comment in schemas.ts).
-    sendDirectMessage(targetReferences: string[], message: string, idempotencyKey?: string) {
+    // ZG-80/OC-92: `bigScreen` -- same optional/additive field as `broadcastMessage` above.
+    sendDirectMessage(
+      targetReferences: string[],
+      message: string,
+      bigScreen: boolean,
+      idempotencyKey?: string,
+    ) {
       return http.request<DirectMessageResponse>(
         '/api/v1/players/message',
         {
           method: 'POST',
-          body: { target_references: targetReferences, msg: message },
+          body: { target_references: targetReferences, msg: message, big_screen: bigScreen },
           idempotencyKey,
         },
         DirectMessageResponseSchema,

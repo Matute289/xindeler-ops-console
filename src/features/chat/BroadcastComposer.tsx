@@ -16,13 +16,14 @@ export function BroadcastComposer() {
   const api = useApi();
   const { colors } = useTheme();
   const [message, setMessage] = useState('');
+  const [bigScreen, setBigScreen] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
   const trimmed = message.trim();
   const canSend = trimmed.length > 0 && message.length <= MAX_MESSAGE_LENGTH;
 
   const sendAction = useDestructiveAction<void>((idempotencyKey) =>
-    api.write.broadcastMessage(trimmed, idempotencyKey),
+    api.write.broadcastMessage(trimmed, bigScreen, idempotencyKey),
   );
 
   async function handleConfirm() {
@@ -30,6 +31,7 @@ export function BroadcastComposer() {
     const result = await sendAction.run();
     if (result !== null) {
       setMessage('');
+      setBigScreen(false);
     }
   }
 
@@ -62,6 +64,37 @@ export function BroadcastComposer() {
         className="rounded-lg border border-steel-dark bg-bg-surface px-3 py-2 text-base text-steel-light dark:border-night-steel-dark dark:bg-night-bg-surface dark:text-night-steel-light"
         style={{ fontFamily: fonts.regular }}
       />
+      {/* ZG-80/OC-92: same switch-pill pattern StatusScreen.tsx already uses for "Seguir en
+          pantalla de bloqueo" — this app has no dedicated Switch component. */}
+      <View className="flex-row items-center justify-between">
+        <Text
+          className="text-xs text-steel-muted dark:text-night-steel-muted"
+          style={{ fontFamily: fonts.regular }}
+        >
+          Enviar como Big Screen
+        </Text>
+        <Pressable
+          onPress={() => setBigScreen((prev) => !prev)}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: bigScreen }}
+          className={`rounded-full border px-3 py-1 ${
+            bigScreen
+              ? 'border-accent-cyan dark:border-night-accent-cyan'
+              : 'border-steel-dark dark:border-night-steel-dark'
+          }`}
+        >
+          <Text
+            className={
+              bigScreen
+                ? 'text-accent-cyan dark:text-night-accent-cyan'
+                : 'text-steel-muted dark:text-night-steel-muted'
+            }
+            style={{ fontFamily: fonts.regular }}
+          >
+            {bigScreen ? 'Activado' : 'Desactivado'}
+          </Text>
+        </Pressable>
+      </View>
       <View className="flex-row items-center justify-between">
         <Text
           className="text-xs text-steel-muted dark:text-night-steel-muted"
@@ -96,7 +129,11 @@ export function BroadcastComposer() {
       <ConfirmByTypingSheet
         visible={confirming}
         word="BROADCAST"
-        description={`Esto envía "${trimmed}" a todos los jugadores conectados — no se puede deshacer.`}
+        description={
+          bigScreen
+            ? `Esto envía "${trimmed}" a todos los jugadores conectados como Big Screen (interrumpe la pantalla del juego) — no se puede deshacer.`
+            : `Esto envía "${trimmed}" a todos los jugadores conectados — no se puede deshacer.`
+        }
         onConfirm={handleConfirm}
         onCancel={() => setConfirming(false)}
       />
