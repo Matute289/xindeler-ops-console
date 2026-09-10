@@ -30,7 +30,7 @@ export default function TotpScreen() {
   const [loading, setLoading] = useState(false);
   // OC-82: shown alongside the gateway's generic rejection when this failure follows a TOTP
   // code the operator just consumed themselves (enrolling, or an earlier login) within its own
-  // 30s step — see totpFreshness.ts for why the gateway can't tell the operator this itself.
+  // 30s step — see totpFreshness.native.ts/.web.ts for why the gateway can't tell the operator this itself.
   const [showFreshCodeHint, setShowFreshCodeHint] = useState(false);
 
   if (!hasPendingLogin) {

@@ -45,7 +45,7 @@ export default function EnrollScreen() {
   const [authCode, setAuthCode] = useState('');
   const [confirmError, setConfirmError] = useState<Error | null>(null);
   const [confirming, setConfirming] = useState(false);
-  // OC-93/ZG-78: same reasoning as /totp's own `showFreshCodeHint` (see totpFreshness.ts) —
+  // OC-93/ZG-78: same reasoning as /totp's own `showFreshCodeHint` (see totpFreshness.native.ts/.web.ts) —
   // Matías's spec explicitly covers submits against EITHER TOTP-gated route, not just /totp's.
   // An enroll-confirm that fails shortly after some other TOTP success (an earlier login, or a
   // prior enroll attempt) is exactly the same "code still on screen from autofill/reuse" shape.
