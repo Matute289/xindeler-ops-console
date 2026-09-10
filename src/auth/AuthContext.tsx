@@ -157,7 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         sessionToken: result.session_token,
       });
       // OC-82: a successful login consumes a TOTP step just like enroll/confirm does — see
-      // totpFreshness.ts for why this matters to the /totp screen's own retry hint.
+      // totpFreshness.native.ts/.web.ts for why this matters to the /totp screen's own retry hint.
       markTotpConsumed();
       pendingCredentials.current = null;
       setHasPendingLogin(false);
