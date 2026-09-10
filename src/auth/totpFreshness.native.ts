@@ -6,8 +6,11 @@
 // from a wrong password. Confirmed root cause for a real incident, 2026-08-29 — see this repo's
 // backlog.md OC-82 and xindeler-zuul's ZG-78.
 //
-// In-memory only (not sessionStorage) — same rationale as AuthContext's own `pendingCredentials`
-// ref: this is a UX hint, not session state, and doesn't need to survive an app restart.
+// In-memory only (not AsyncStorage) — same rationale as AuthContext's own `pendingCredentials`
+// ref: this is a UX hint, not session state, and doesn't need to survive an app restart. Unlike
+// web (see totpFreshness.web.ts), a deep link opened while this app is already running in memory
+// does NOT restart the JS process, so this in-memory variable already survives the one real
+// cross-screen case this needs to cover (login → enroll, or enroll → login) without any storage.
 let lastConsumedAt: number | null = null;
 
 export function markTotpConsumed(): void {
