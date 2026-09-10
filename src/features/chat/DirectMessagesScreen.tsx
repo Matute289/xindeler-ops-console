@@ -21,6 +21,7 @@ export function DirectMessagesScreen() {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<{ reference: string; display_username: string }[]>([]);
   const [message, setMessage] = useState('');
+  const [bigScreen, setBigScreen] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [result, setResult] = useState<DirectMessageResponse | null>(null);
 
@@ -31,6 +32,7 @@ export function DirectMessagesScreen() {
     api.write.sendDirectMessage(
       selected.map((player) => player.reference),
       trimmed,
+      bigScreen,
       idempotencyKey,
     ),
   );
@@ -50,6 +52,7 @@ export function DirectMessagesScreen() {
       setResult(sendResult);
       setMessage('');
       setSelected([]);
+      setBigScreen(false);
     }
   }
 
@@ -164,6 +167,37 @@ export function DirectMessagesScreen() {
           className="rounded-lg border border-steel-dark bg-bg-surface px-3 py-2 text-base text-steel-light dark:border-night-steel-dark dark:bg-night-bg-surface dark:text-night-steel-light"
           style={{ fontFamily: fonts.regular }}
         />
+        {/* ZG-80/OC-92: same switch-pill pattern as BroadcastComposer.tsx and StatusScreen.tsx's
+            "Seguir en pantalla de bloqueo" — this app has no dedicated Switch component. */}
+        <View className="flex-row items-center justify-between">
+          <Text
+            className="text-xs text-steel-muted dark:text-night-steel-muted"
+            style={{ fontFamily: fonts.regular }}
+          >
+            Enviar como Big Screen
+          </Text>
+          <Pressable
+            onPress={() => setBigScreen((prev) => !prev)}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: bigScreen }}
+            className={`rounded-full border px-3 py-1 ${
+              bigScreen
+                ? 'border-accent-cyan dark:border-night-accent-cyan'
+                : 'border-steel-dark dark:border-night-steel-dark'
+            }`}
+          >
+            <Text
+              className={
+                bigScreen
+                  ? 'text-accent-cyan dark:text-night-accent-cyan'
+                  : 'text-steel-muted dark:text-night-steel-muted'
+              }
+              style={{ fontFamily: fonts.regular }}
+            >
+              {bigScreen ? 'Activado' : 'Desactivado'}
+            </Text>
+          </Pressable>
+        </View>
         <View className="flex-row items-center justify-between">
           <Text
             className="text-xs text-steel-muted dark:text-night-steel-muted"
@@ -209,7 +243,7 @@ export function DirectMessagesScreen() {
         word="ENVIAR"
         description={`Esto envía "${trimmed}" a ${selected.length} jugador${
           selected.length === 1 ? '' : 'es'
-        } — no se puede deshacer.`}
+        }${bigScreen ? ' como Big Screen (interrumpe la pantalla del juego)' : ''} — no se puede deshacer.`}
         onConfirm={handleConfirm}
         onCancel={() => setConfirming(false)}
       />

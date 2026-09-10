@@ -7,7 +7,11 @@ const router = express.Router();
 const RATE_LIMIT_MS = 5000;
 
 router.post('/', (req, res) => {
-  const { msg } = req.body || {};
+  // ZG-80/OC-92: `big_screen` is additive/optional on the real route -- accepted here for the
+  // same reason, defaulting to `false`. No in-game overlay rendering to simulate yet (that's
+  // engine-side work, not landed), so this mock only records the flag in the audit log rather
+  // than pretending to show anything -- same discipline `playerMessage.js` follows.
+  const { msg, big_screen: bigScreen = false } = req.body || {};
   if (!msg || typeof msg !== 'string') {
     return sendError(res, 400, 'invalid_message', 'msg es requerido');
   }
@@ -29,7 +33,7 @@ router.post('/', (req, res) => {
     operatorUuid: req.operatorUuid,
     operatorUsername: req.operator,
     action: 'broadcast',
-    payload: { msg },
+    payload: { msg, big_screen: bigScreen },
     outcome: 'success',
   });
   res.status(204).end();
